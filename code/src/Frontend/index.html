@@ -198,6 +198,38 @@
                 width: 100%;
             }
         }
+
+        /* Add these styles */
+        .loading-overlay {
+            display: none;
+            position: relative;
+            min-height: 100px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 247, 255, 0.3);
+            border-top: 4px solid #00f7ff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            text-align: center;
+            color: #00f7ff;
+            margin-top: 10px;
+        }
+
+        #output:not(:empty) h2 {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -219,6 +251,10 @@
         <div class="panel output-area">
             <pre id="output">
                 <h2>Output Area</h2>
+                <div class="loading-overlay">
+                    <div class="spinner"></div>
+                    <div class="loading-text">Entity Extraction in progress...</div>
+                </div>
             </pre>
         </div>
 
@@ -226,7 +262,7 @@
         <div class="button-area">
             <label class="btn upload-btn">
                 Upload
-                <input type="file" id="fileInput" hidden multiple>
+                <input type="file" id="fileInput" accept=".csv,.pdf,.txt" hidden>
             </label>
             <button class="btn analyze-btn" id="analyzeBtn">Analyze</button>
         </div>
@@ -246,46 +282,86 @@
         });
 
         // Analysis Simulation
-        analyzeBtn.addEventListener('click', async () => {
-            const text = document.getElementById('inputText').value.trim();
-            // if (!fileInput.files.length) {
-            //     alert('Please upload files first!');
-            //     return;
-            // }
+        analyzeBtn.addEventListener('click', () => {
+            const textInput = document.getElementById('inputText').value.trim();
+            const formData = new FormData();
 
-            // const output = Array.from(fileInput.files)
-            //     .map(file => 
-            //         `Analyzing ${file.name}...\n` +
-            //         `- Size: ${file.size} bytes\n` +
-            //         `- Type: ${file.type}\n\n`
-            //     ).join('');
+            try {
+                outputArea.innerHTML = '<h2>Output Area</h2><div class="loading-overlay"></div>';
+                if (fileInput.files.length) {
+                    outputArea.querySelector('.loading-overlay').innerHTML = `
+                        <div class="spinner"></div>
+                        <div class="loading-text">Entity Extraction in progress...</div>
+                    `;
+                    outputArea.querySelector('.loading-overlay').style.display = 'block';
 
-            // outputArea.textContent = output;
-            if(!text) {
-                alert('Please enter some text to analyze.');
-                return;
-            }
-            try{
-                const response = await fetch('/analyze',{
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({text})
-                });
+                    formData.append("file", fileInput.files[0]);
+                    console.log("form data:" + formData);
+                    console.log(fileInput.files[0].name);
 
-                const result = await response.json();
-                console.log(result);
-                if (result.status === 'success') {
-                    // Display formatted JSON in output area
-                    outputArea.textContent = JSON.stringify(result.entities, null, 2);
+                    fetch('/analyze', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error("Failed to analyze file.");
+                        return response.json();
+                    })
+                    .then(result => handleResponse(result))
+                    .catch(error => {
+                        console.error("Error:", error);
+                        outputArea.textContent = "An error occurred. Please try again.";
+                    });
+
+                } else if (textInput) {
+                    outputArea.querySelector('.loading-overlay').innerHTML = `
+                        <div class="spinner"></div>
+                        <div class="loading-text">Entity Extraction in progress...</div>
+                    `;
+                    outputArea.querySelector('.loading-overlay').style.display = 'block';
+                    console.log("text-" + textInput);
+                    fetch('/analyze', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 'text': textInput })
+                    })
+                    .then(response => {
+                        if (!response.ok) throw new Error("Failed to analyze text.");
+                        return response.json();
+                    })
+                    .then(result => handleResponse(result))
+                    .catch(error => {
+                        console.error("Error:", error);
+                        outputArea.textContent = "An error occurred. Please try again.";
+                    });
+
                 } else {
-                    console.log("Error:", error);
-                    outputArea.textContent = "An error occurred. Please try again.";
+                    alert('Please enter some text or upload a file to analyze.');
                 }
-            }
-            catch{
-                console.log("error")
+            } catch (error) {
+                console.error("Error:", error);
+                outputArea.textContent = "An error occurred. Please try again.";
             }
         });
+
+        // Helper function to handle response
+        function handleResponse(result) {
+            const outputArea = document.getElementById('output');
+            const loadingOverlay = outputArea.querySelector('.loading-overlay');
+    
+            // Hide loading spinner
+            loadingOverlay.style.display = 'none';
+            if (result.status === 'success') {
+                if (result.entities && result.entities.error) {
+                    outputArea.textContent = result.entities.error;
+                } else {
+                    console.log(result.entities)
+                    outputArea.textContent = JSON.stringify(result.entities, null, 2);
+                }
+            } else {
+                outputArea.textContent = result.error || "An error occurred. Please try again.";
+            }
+        }
     </script>
 </body>
 </html>

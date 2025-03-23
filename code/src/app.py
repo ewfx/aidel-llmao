@@ -5,8 +5,7 @@ import backend as bk
 
 app = Flask(
     __name__, 
-    template_folder="Frontend/",
-    static_folder="Frontend/"
+    template_folder="Frontend/"
 )
 app.config['UPLOAD_FOLDER'] = 'uploads'
 
@@ -35,19 +34,31 @@ def upload():
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
-    data = request.get_json()  # ✅ Get JSON data properly
-    text = data.get("text", "")  # ✅ Extract text safely
+    try:
+        if 'file' in request.files:
+            file = request.files['file']
+            text = bk.process_file(file)
 
-    if not text:
-        return jsonify({"status": "error", "message": "No text provided"}), 400
-    
-    print(text, type(text))
-    entities = bk.extract_entities(text)
+            if file.filename == "":
+                return jsonify({
+                    "status" : "error",
+                    "error" : "No file selected"
+                }), 400
+        elif 'text' in request.json:
+            text = request.json['text']
 
-    return jsonify({
-        'status': 'success',
-        'entities': entities
-    }), 200
+        entities = bk.extract_entities(text)
+        print("Entities: ",entities)
+
+        return jsonify({
+            "status" : "success",
+            "entities" : entities
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status" : "error",
+            "error": f"Error analyzing file: {str(e)}"
+        }), 400
 
 if __name__ == '__main__':
     app.run(debug=True)
