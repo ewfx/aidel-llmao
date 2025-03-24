@@ -46,10 +46,7 @@ def analyze():
                 }), 400
         elif 'text' in request.json:
             text = request.json['text']
-
         entities = bk.extract_entities(text)
-        print("Entities: ",entities)
-
         return jsonify({
             "status" : "success",
             "entities" : entities

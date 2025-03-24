@@ -5,21 +5,24 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
 )
+from duckduckgo_search import DDGS
 from langchain.chains import LLMChain
 import getpass
 import os
 import io
-import re
+from googlesearch import search
+import re,requests
 import json
 import PyPDF2
 import pandas as pd
 from dotenv import load_dotenv
 
-load_dotenv()
+# load_dotenv()
 
-if not os.environ.get("TOGETHER_API_KEY"):
-    os.environ["TOGETHER_API_KEY"] = os.getenv("TOGETHER_API_KEY")
-
+# if not os.environ.get("TOGETHER_API_KEY"):
+#     os.environ["TOGETHER_API_KEY"] = os.getenv("TOGETHER_API_KEY")
+df=pd.read_csv("sdn.csv")
+os.environ["TOGETHER_API_KEY"] = "tgp_v1_pTSXsrZo4FJSVoAuRWcrjYVuEFe_67YW5FizKzJuo2g"
 def extract_json(response_content):
     try:
         # First try to parse directly if response is clean JSON
@@ -78,7 +81,7 @@ def extract_json(response_content):
             return {"error": f"JSON extraction failed: {str(e)}"}
 
 def process_file(file):
-    filename = file.filename.lower()
+    filename = file.filename
     if filename.endswith('.txt'):
         text = file.read().decode('utf-8')
     elif filename.endswith('.pdf'):
@@ -159,12 +162,199 @@ def extract_entities(text):
         result = chain.invoke({'transaction_data': text})
         # print(result)
 
-        result_json = extract_json(result.content)  # Access .content property
+        result_json = extract_json(result.content)
+          # Access .content property
+        sender_name = result_json.get("sender", {}).get("name", "Unknown")
+        senderRiskScore=getRiskScore(sender_name)
+        print(senderRiskScore)
         # print(result_json)
-        
         if "error" in result_json:
             return {"error": result_json["error"]}
-        return result_json
+        return senderRiskScore
     except Exception as e:
         print(str(e))
         # return {"error": f"LLM processing failed: {str(e)}"}
+def getRiskScore(company):
+    isSanctioned=fetch_sanctions(company)
+    wikipediaData=fetch_duckduckgo_risk_data(company)
+    googleData=google_search(company)
+    return llmResponseChain(isSanctioned,company,wikipediaData,googleData)
+def llmResponseChain(isSanctioned,company,wikipediaData,googleData):
+    url = "https://api.together.xyz/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer tgp_v1_pTSXsrZo4FJSVoAuRWcrjYVuEFe_67YW5FizKzJuo2g",
+        "Content-Type": "application/json"
+    }
+
+    # Format the prompt
+    prompt = f"""
+    ### Company Risk Score Analysis
+
+    **Company Name:** {company}  
+
+    #### 🛑 Sanctions Status (70% Weight)
+    { "⚠️ HIGH RISK: This company is sanctioned or has past sanctions. This significantly increases the overall risk score." if isSanctioned else "✅ No known sanctions. Sanctions risk is minimal." }
+
+    #### 📖 Wikipedia Risk Insights (15% Weight)
+    Analyze the { wikipediaData } data to get more insights to generate summary
+
+    #### 🌐 Google Risk Insights (15% Weight)
+    Analyze the { googleData } data to get more insights to generate summary
+    
+    #### 📊 Risk Scoring Criteria
+    - **Sanctions Risk (70%)** → **{"10/10" if isSanctioned else "0/10"}**
+    - **Regulatory or legal issues (15%)** → **{"7/10" if 'lawsuit' in googleData or 'SEC' in googleData else "3/10"}**
+    - **Financial instability concerns (10%)** → **{"6/10" if 'debt' in googleData or 'financial trouble' in googleData else "2/10"}**
+    - **Market reputation risks (5%)** → **{"8/10" if 'controversy' in googleData else "4/10"}**
+    
+    #### 🏆 Final Risk Score Calculation
+    - **Sanctions Weight:** { "50" if isSanctioned else "0" }  
+    - **Regulatory Risk Weight:** { "7" if 'lawsuit' in googleData or 'SEC' in googleData else "3" }  
+    - **Financial Risk Weight:** { "6" if 'debt' in googleData or 'financial trouble' in googleData else "2" }  
+    - **Reputation Risk Weight:** { "8" if 'controversy' in googleData else "4" }  
+
+    📌 **Total Risk Score (out of 100):** { 50 * (1 if isSanctioned else 0) + 7 + 6 + 8 } / 100  
+    dont show risk Scoring creiteria in output and weights and percentages also in output
+    **📝 Conclusion:**  
+    { "generate the conclusion from available data be precise" }
+    """
+
+    data = {
+        "model": "meta-llama/Llama-Vision-Free",
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.7
+    }
+
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+
+    if response.status_code == 200:
+        result = response.json()
+    else:
+        print("Error:", response.text)
+        return response.text
+    return result["choices"][0]["message"]["content"]
+
+def generatePrompt(isSanctioned,wikipediaData,googleData,company):
+    prompt = f"""
+    **🔍 Company Risk Score Analysis: {company}**
+    
+    ### 🛑 **Sanctions Status (70% Weight)**
+    { "⚠️ HIGH RISK: This company is sanctioned or has past sanctions. This significantly increases the overall risk score." if isSanctioned else "✅ No known sanctions. Sanctions risk is minimal." }
+
+    ### 📖 **Wikipedia Risk Insights (15% Weight)**
+    { wikipediaData if wikipediaData else "No significant risk-related data found on Wikipedia." }
+
+    ### 🌐 **Google Risk Insights (15% Weight)**
+    { googleData if googleData else "No major risk-related findings from Google search." }
+
+    ### 📊 **Risk Scoring Criteria**
+    - **Sanctions Risk** (60%) → **{"10/10" if isSanctioned else "0/10"}**
+    - **Regulatory or legal issues?** (15%) → **{"7/10" if 'lawsuit' in googleData or 'SEC' in googleData else "3/10"}**
+    - **Financial instability concerns?** (12%) → **{"6/10" if 'debt' in googleData or 'financial trouble' in googleData else "2/10"}**
+    - **Market reputation risks?** (10%) → **{"8/10" if 'controversy' in googleData else "4/10"}**
+    - **Environmental or operational risks?** (3%) → **{"7/10" if 'violation' in googleData or 'fines' in googleData else "3/10"}**
+
+    ### 🏆 **Final Risk Score Calculation**
+    - **Sanctions Weight:** { "50" if isSanctioned else "0" }  
+    - **Regulatory Risk Weight:** { "7" if 'lawsuit' in googleData or 'SEC' in googleData else "3" }  
+    - **Financial Risk Weight:** { "6" if 'debt' in googleData or 'financial trouble' in googleData else "2" }  
+    - **Reputation Risk Weight:** { "8" if 'controversy' in googleData else "4" }  
+    - **Environmental/Operational Risk Weight:** { "7" if 'violation' in googleData or 'fines' in googleData else "3" }  
+
+    **📌 Total Risk Score (out of 100):** { 50 * (1 if isSanctioned else 0) + 7 + 6 + 8 + 7 } / 100  
+
+    **📝 Conclusion:**  
+    { "🚨 HIGH RISK: Due to active sanctions, regulatory, and financial concerns, this company poses a significant risk." if isSanctioned else "⚖️ MODERATE RISK: No sanctions, but regulatory and financial risks should be monitored." }
+    """
+    return prompt
+
+def fetch_sanctions(company_name):
+    if company_name in df.iloc[:, 1].values:
+        return True
+    else:
+        return False
+    
+def fetch_duckduckgo_risk_data(company_name, num_results=5):
+    """Fetch risk-related data about a company using DuckDuckGo search (avoiding duplicate snippets)."""
+
+    query = f"{company_name} regulatory violations lawsuits fines risks"
+    
+    with DDGS() as ddgs:
+        search_results = list(ddgs.text(query, max_results=num_results))
+
+    if not search_results:
+        return f"No relevant risk data found for {company_name}."
+
+    # Use a set to store unique snippets
+    unique_snippets = set()
+    extracted_texts = []
+
+    for result in search_results:
+        snippet = result.get("body", "").strip()
+        if snippet and snippet not in unique_snippets:
+            unique_snippets.add(snippet)
+            extracted_texts.append(snippet)
+
+    # Concatenate the unique extracted snippets
+    risk_summary = " ".join(extracted_texts)
+
+    return f"🔹 **Extended Risk Summary for {company_name}:**\n\n{risk_summary}"
+
+
+
+
+def llmresponse(prompt):
+    response = requests.post(
+    url="https://openrouter.ai/api/v1/chat/completions",
+    headers={
+      "Authorization": "Bearer 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}",
+      "Content-Type": "application/json",
+    },
+    data=json.dumps({
+      "model": "nvidia/llama-3.1-nemotron-70b-instruct:free",
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": prompt
+            }
+          ]
+        }
+      ],
+      "temperature": 0.5
+    })
+    )
+
+    result = response.json()
+    print("llms response:")
+    print(result)
+    return result["choices"][0]["message"]["content"] if "choices" in result else "Error generating justification."
+
+
+API_KEY = "AIzaSyDyHPR19wz3olz4oS73ole5emeU3-tUgzM"  
+CX = "8337469a8b81e435d"  # Custom Search Engine ID
+
+def google_search(query, num_results=5):
+    url = f"https://www.googleapis.com/customsearch/v1"
+    
+    params = {
+        "key": API_KEY,
+        "cx": CX,
+        "q": f"{query} risk score summary OR risk assessment OR financial risks OR regulatory risks OR risk factors site:investing.com OR site:reuters.com OR site:sec.gov OR site:morningstar.com",
+        "num": num_results
+    }
+
+    response = requests.get(url, params=params)
+    data = response.json()
+   
+    unique_snippets = set()  # Using a set to store unique snippets
+    
+    if "items" in data:
+        for item in data["items"]:
+            snippet = item.get("snippet", "")
+            if snippet and snippet not in unique_snippets:
+                unique_snippets.add(snippet)
+                
+    return unique_snippets
