@@ -165,21 +165,39 @@ def extract_entities(text):
         result_json = extract_json(result.content)
           # Access .content property
         sender_name = result_json.get("sender", {}).get("name", "Unknown")
-        senderRiskScore=getRiskScore(sender_name)
-        print(senderRiskScore)
+        receiver_name = result_json.get("receiver", {}).get("name", "Unknown")
+        print(sender_name)
+        print(receiver_name)
+        getllmResponse=getRiskScore(sender_name,receiver_name)
+        print(getllmResponse)
         # print(result_json)
         if "error" in result_json:
             return {"error": result_json["error"]}
-        return senderRiskScore
+        return getllmResponse
     except Exception as e:
         print(str(e))
         # return {"error": f"LLM processing failed: {str(e)}"}
-def getRiskScore(company):
-    isSanctioned=fetch_sanctions(company)
-    wikipediaData=fetch_duckduckgo_risk_data(company)
-    googleData=google_search(company)
-    return llmResponseChain(isSanctioned,company,wikipediaData,googleData)
-def llmResponseChain(isSanctioned,company,wikipediaData,googleData):
+def getRiskScore(senderCompany,receiverCompany):
+    isSenderSanctioned=fetch_sanctions(senderCompany)
+    senderwikipediaData=fetch_duckduckgo_risk_data(senderCompany)
+    sendergoogleData=google_search(senderCompany)
+    isReceiverSanctioned=fetch_sanctions(receiverCompany)
+    receiverwikipediaData=fetch_duckduckgo_risk_data(receiverCompany)
+    receivergoogleData=google_search(receiverCompany)
+    print("1:")
+    print(isSenderSanctioned)
+    print("2:")
+    print(isReceiverSanctioned)
+    print("Wikidata")
+    print(senderwikipediaData)
+    print("google data:")
+    print(sendergoogleData)
+    print("Wikidata")
+    print(receiverwikipediaData)
+    print("google data:")
+    print(receivergoogleData)
+    return llmResponseChain(isSenderSanctioned,senderwikipediaData,sendergoogleData,isReceiverSanctioned,receiverwikipediaData,receivergoogleData,senderCompany,receiverCompany)
+def llmResponseChain(isSenderSanctioned,senderwikipediaData,sendergoogleData,isReceiverSanctioned,receiverwikipediaData,receivergoogleData,senderCompany,receiverCompany):
     url = "https://api.together.xyz/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer tgp_v1_pTSXsrZo4FJSVoAuRWcrjYVuEFe_67YW5FizKzJuo2g",
@@ -188,41 +206,39 @@ def llmResponseChain(isSanctioned,company,wikipediaData,googleData):
 
     # Format the prompt
     prompt = f"""
-    ### Company Risk Score Analysis
+### Combined Company Risk Score Analysis  
 
-    **Company Name:** {company}  
+**Sender:** {senderCompany}  
+**Receiver:** {receiverCompany}  
+#### 🛑 **Sanctions Status**
+- "⚠️ HIGH RISK: This company is sanctioned or has a history of sanctions, significantly increasing the risk score.{ isSenderSanctioned and isReceiverSanctioned}"
 
-    #### 🛑 Sanctions Status (70% Weight)
-    { "⚠️ HIGH RISK: This company is sanctioned or has past sanctions. This significantly increases the overall risk score." if isSanctioned else "✅ No known sanctions. Sanctions risk is minimal." }
+#### 📖 **Wikipedia Risk Insights**
+    - Analyze  {receiverwikipediaData and senderwikipediaData}"
 
-    #### 📖 Wikipedia Risk Insights (15% Weight)
-    Analyze the { wikipediaData } data to get more insights to generate summary
+#### 🌐 **Google Risk Insights**
+- Analyze  {sendergoogleData and receivergoogleData }"
+### 📊 **Risk Scoring Breakdown**
+- **Regulatory or Legal Risks (15%)** → Rate from 1 to 5 based on the presence of terms related to lawsuits, investigations, regulatory fines, compliance failures, or SEC filings in Google search data from both sender and receiver data.
+- **Financial Instability (10%)** → Rate from 1 to 5 based on indications of financial distress, bankruptcy, high debt, cash flow problems, or revenue decline in Google search from both sender and receiver data.
+- **Market Reputation Risks (5%)** → Rate from 1 to 5 based on signs of scandals, controversies, public backlash, negative media coverage, or customer complaints in Google search from both sender and receiver data.
 
-    #### 🌐 Google Risk Insights (15% Weight)
-    Analyze the { googleData } data to get more insights to generate summary
-    
-    #### 📊 Risk Scoring Criteria
-    - **Sanctions Risk (70%)** → **{"10/10" if isSanctioned else "0/10"}**
-    - **Regulatory or legal issues (15%)** → **{"7/10" if 'lawsuit' in googleData or 'SEC' in googleData else "3/10"}**
-    - **Financial instability concerns (10%)** → **{"6/10" if 'debt' in googleData or 'financial trouble' in googleData else "2/10"}**
-    - **Market reputation risks (5%)** → **{"8/10" if 'controversy' in googleData else "4/10"}**
-    
-    #### 🏆 Final Risk Score Calculation
-    - **Sanctions Weight:** { "50" if isSanctioned else "0" }  
-    - **Regulatory Risk Weight:** { "7" if 'lawsuit' in googleData or 'SEC' in googleData else "3" }  
-    - **Financial Risk Weight:** { "6" if 'debt' in googleData or 'financial trouble' in googleData else "2" }  
-    - **Reputation Risk Weight:** { "8" if 'controversy' in googleData else "4" }  
+### 🏆 **Final Risk Score Calculation**
+- Sanctions Risk: {"50" if isSenderSanctioned and isReceiverSanctioned else "30" if isSenderSanctioned or isReceiverSanctioned else 0}
+- Regulatory Risk: Assign a score based on available data.
+- Financial Risk: Assign a score based on available data.
+- Reputation Risk: Assign a score based on available data.
 
-    📌 **Total Risk Score (out of 100):** { 50 * (1 if isSanctioned else 0) + 7 + 6 + 8 } / 100  
-    dont show risk Scoring creiteria in output and weights and percentages also in output
-    **📝 Conclusion:**  
-    { "generate the conclusion from available data be precise" }
-    """
 
+📌 **Total Risk Score (out of 100):** Calculate and provide the total score.
+Just show Total Risk Score and conclusion in output
+**📝 Conclusion:**  
+- Generate the conclusion from the available data from google and wikipedia data for both sender and receiver be precise dont mention th percentage in conclusion.  Mention Both sender and receiver company details
+"""
     data = {
         "model": "meta-llama/Llama-Vision-Free",
         "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.7
+        "temperature": 0.3
     }
 
     response = requests.post(url, headers=headers, data=json.dumps(data))
@@ -234,39 +250,6 @@ def llmResponseChain(isSanctioned,company,wikipediaData,googleData):
         return response.text
     return result["choices"][0]["message"]["content"]
 
-def generatePrompt(isSanctioned,wikipediaData,googleData,company):
-    prompt = f"""
-    **🔍 Company Risk Score Analysis: {company}**
-    
-    ### 🛑 **Sanctions Status (70% Weight)**
-    { "⚠️ HIGH RISK: This company is sanctioned or has past sanctions. This significantly increases the overall risk score." if isSanctioned else "✅ No known sanctions. Sanctions risk is minimal." }
-
-    ### 📖 **Wikipedia Risk Insights (15% Weight)**
-    { wikipediaData if wikipediaData else "No significant risk-related data found on Wikipedia." }
-
-    ### 🌐 **Google Risk Insights (15% Weight)**
-    { googleData if googleData else "No major risk-related findings from Google search." }
-
-    ### 📊 **Risk Scoring Criteria**
-    - **Sanctions Risk** (60%) → **{"10/10" if isSanctioned else "0/10"}**
-    - **Regulatory or legal issues?** (15%) → **{"7/10" if 'lawsuit' in googleData or 'SEC' in googleData else "3/10"}**
-    - **Financial instability concerns?** (12%) → **{"6/10" if 'debt' in googleData or 'financial trouble' in googleData else "2/10"}**
-    - **Market reputation risks?** (10%) → **{"8/10" if 'controversy' in googleData else "4/10"}**
-    - **Environmental or operational risks?** (3%) → **{"7/10" if 'violation' in googleData or 'fines' in googleData else "3/10"}**
-
-    ### 🏆 **Final Risk Score Calculation**
-    - **Sanctions Weight:** { "50" if isSanctioned else "0" }  
-    - **Regulatory Risk Weight:** { "7" if 'lawsuit' in googleData or 'SEC' in googleData else "3" }  
-    - **Financial Risk Weight:** { "6" if 'debt' in googleData or 'financial trouble' in googleData else "2" }  
-    - **Reputation Risk Weight:** { "8" if 'controversy' in googleData else "4" }  
-    - **Environmental/Operational Risk Weight:** { "7" if 'violation' in googleData or 'fines' in googleData else "3" }  
-
-    **📌 Total Risk Score (out of 100):** { 50 * (1 if isSanctioned else 0) + 7 + 6 + 8 + 7 } / 100  
-
-    **📝 Conclusion:**  
-    { "🚨 HIGH RISK: Due to active sanctions, regulatory, and financial concerns, this company poses a significant risk." if isSanctioned else "⚖️ MODERATE RISK: No sanctions, but regulatory and financial risks should be monitored." }
-    """
-    return prompt
 
 def fetch_sanctions(company_name):
     if company_name in df.iloc[:, 1].values:
@@ -277,7 +260,7 @@ def fetch_sanctions(company_name):
 def fetch_duckduckgo_risk_data(company_name, num_results=5):
     """Fetch risk-related data about a company using DuckDuckGo search (avoiding duplicate snippets)."""
 
-    query = f"{company_name} regulatory violations lawsuits fines risks"
+    query = f"{company_name} regulatory violations OR lawsuits OR fines OR risk score summary OR risk assessment OR financial risks OR regulatory risks OR contraverseries"
     
     with DDGS() as ddgs:
         search_results = list(ddgs.text(query, max_results=num_results))
@@ -342,7 +325,7 @@ def google_search(query, num_results=5):
     params = {
         "key": API_KEY,
         "cx": CX,
-        "q": f"{query} risk score summary OR risk assessment OR financial risks OR regulatory risks OR risk factors site:investing.com OR site:reuters.com OR site:sec.gov OR site:morningstar.com",
+        "q": f"{query} regulatory violations OR lawsuits OR fines OR risk score summary OR risk assessment OR financial risks OR regulatory risks OR contraverseries",
         "num": num_results
     }
 
