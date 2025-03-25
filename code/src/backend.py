@@ -17,12 +17,12 @@ import PyPDF2
 import pandas as pd
 from dotenv import load_dotenv
 
-# load_dotenv()
+load_dotenv()
 
 # if not os.environ.get("TOGETHER_API_KEY"):
 #     os.environ["TOGETHER_API_KEY"] = os.getenv("TOGETHER_API_KEY")
 df=pd.read_csv("sdn.csv")
-os.environ["TOGETHER_API_KEY"] = "tgp_v1_pTSXsrZo4FJSVoAuRWcrjYVuEFe_67YW5FizKzJuo2g"
+os.environ["TOGETHER_API_KEY"] = os.getenv("TOGETHER_API_KEY")
 def extract_json(response_content):
     try:
         # First try to parse directly if response is clean JSON
@@ -105,6 +105,7 @@ def extract_entities(text):
             Extract all relevant entities from the following transaction record and output a JSON object with the following format:
 
             {{
+             "Transaction_ID":"Transaction id",
             "sender": {{
                 "name": "ENTITY_NAME",
                 "location": "ENTITY_LOCATION",
@@ -170,6 +171,9 @@ def extract_entities(text):
         print(receiver_name)
         getllmResponse=getRiskScore(sender_name,receiver_name)
         print(getllmResponse)
+        # print(getllmResponse.type())
+        # extract_llmresponse_entities(getllmResponse,result_json)
+        
         # print(result_json)
         if "error" in result_json:
             return {"error": result_json["error"]}
@@ -184,63 +188,56 @@ def getRiskScore(senderCompany,receiverCompany):
     isReceiverSanctioned=fetch_sanctions(receiverCompany)
     receiverwikipediaData=fetch_duckduckgo_risk_data(receiverCompany)
     receivergoogleData=google_search(receiverCompany)
-    print("1:")
-    print(isSenderSanctioned)
-    print("2:")
-    print(isReceiverSanctioned)
-    print("Wikidata")
-    print(senderwikipediaData)
-    print("google data:")
-    print(sendergoogleData)
-    print("Wikidata")
-    print(receiverwikipediaData)
-    print("google data:")
-    print(receivergoogleData)
     return llmResponseChain(isSenderSanctioned,senderwikipediaData,sendergoogleData,isReceiverSanctioned,receiverwikipediaData,receivergoogleData,senderCompany,receiverCompany)
+      
 def llmResponseChain(isSenderSanctioned,senderwikipediaData,sendergoogleData,isReceiverSanctioned,receiverwikipediaData,receivergoogleData,senderCompany,receiverCompany):
     url = "https://api.together.xyz/v1/chat/completions"
     headers = {
-        "Authorization": f"Bearer tgp_v1_pTSXsrZo4FJSVoAuRWcrjYVuEFe_67YW5FizKzJuo2g",
+        "Authorization": f"Bearer API KEY",
         "Content-Type": "application/json"
     }
 
     # Format the prompt
     prompt = f"""
-### Combined Company Risk Score Analysis  
+    ### Combined Company Risk Score Analysis  
 
-**Sender:** {senderCompany}  
-**Receiver:** {receiverCompany}  
-#### 🛑 **Sanctions Status**
-- "⚠️ HIGH RISK: This company is sanctioned or has a history of sanctions, significantly increasing the risk score.{ isSenderSanctioned and isReceiverSanctioned}"
+    *Sender:* {senderCompany}  
+    *Receiver:* {receiverCompany}  
+    #### 🛑 *Sanctions Status*
+    - "⚠️ HIGH RISK: if {senderCompany} has {isSenderSanctioned} give HIGH else LOW and if {receiverCompany} has {isReceiverSanctioned} give HIGH else LOW"
 
-#### 📖 **Wikipedia Risk Insights**
-    - Analyze  {receiverwikipediaData and senderwikipediaData}"
+    ### *Task*  
+    1. *Perform a semantic search* within the provided data to detect regulatory, financial, and reputational risks {receiverwikipediaData and senderwikipediaData and sendergoogleData and receivergoogleData}.  
+    2. *Identify implicit risks* even if exact words (lawsuit, fraud, bankruptcy, controversy) are not present but are implied through context.  
+    3. *Analyze risk indicators* related to compliance violations, financial instability, and reputational concerns from both sender and receiver perspectives.  
+    4. *Assign risk scores* (HIGH, MEDIUM or LOW) based on severity and frequency of identified risks.  
+    5. *Provide supporting evidence* by extracting relevant portions of the data that justify the assigned scores.  
 
-#### 🌐 **Google Risk Insights**
-- Analyze  {sendergoogleData and receivergoogleData }"
-### 📊 **Risk Scoring Breakdown**
-- **Regulatory or Legal Risks (15%)** → Rate from 1 to 5 based on the presence of terms related to lawsuits, investigations, regulatory fines, compliance failures, or SEC filings in Google search data from both sender and receiver data.
-- **Financial Instability (10%)** → Rate from 1 to 5 based on indications of financial distress, bankruptcy, high debt, cash flow problems, or revenue decline in Google search from both sender and receiver data.
-- **Market Reputation Risks (5%)** → Rate from 1 to 5 based on signs of scandals, controversies, public backlash, negative media coverage, or customer complaints in Google search from both sender and receiver data.
+    ### *Risk Scoring Breakdown*  
+    - *Regulatory or Legal Risks* → Score based on *semantic indications* of lawsuits, investigations, regulatory actions, fines, compliance failures, or SEC-related scrutiny across sender and receiver data.  
+    - *Financial Instability * → Score based on *contextual analysis* of financial distress, bankruptcy risks, debt burdens, or cash flow issues in the sender and receiver data.  
+    - *Market Reputation Risks* → Score based on *insights from semantic search* regarding past controversies, negative public sentiment, media scrutiny, or brand damage.  
 
-### 🏆 **Final Risk Score Calculation**
-- Sanctions Risk: {"50" if isSenderSanctioned and isReceiverSanctioned else "30" if isSenderSanctioned or isReceiverSanctioned else 0}
-- Regulatory Risk: Assign a score based on available data.
-- Financial Risk: Assign a score based on available data.
-- Reputation Risk: Assign a score based on available data.
+    ### 🏆 *Final Risk Score Calculation*
+    - Sanctions Risk: {"50" if isSenderSanctioned and isReceiverSanctioned else "30" if isSenderSanctioned or isReceiverSanctioned else 0}
+    - Regulatory Risk: Assign a score based on available data (7->HIGH,3->MEDIUM 1->LOW).
+    - Financial Risk: Assign a score based on available data (7->HIGH,3->MEDIUM 1->LOW).
+    - Reputation Risk: Assign a score based on available data (7->HIGH,3->MEDIUM 1->LOW).
+    the output should have only sender,receiver,risk score and conclusion, don't give risk score breakdown and final risk score calculation details in output
+    don't give note in output and don't repeat the data twice
 
+    📌 *Risk Score (out of 100):* Calculate and provide the total score.
 
-📌 **Total Risk Score (out of 100):** Calculate and provide the total score.
-Just show Total Risk Score and conclusion in output
-**📝 Conclusion:**  
-- Generate the conclusion from the available data from google and wikipedia data for both sender and receiver be precise dont mention th percentage in conclusion.  Mention Both sender and receiver company details
-"""
+   
+    *📝 Conclusion:*  
+    Generate the conclusion from the available data from google and wikipedia data for both sender and receiver be precise dont mention th percentage in conclusion.  Mention Both sender and receiver company details
+
+    """
     data = {
         "model": "meta-llama/Llama-Vision-Free",
         "messages": [{"role": "user", "content": prompt}],
         "temperature": 0.3
     }
-
     response = requests.post(url, headers=headers, data=json.dumps(data))
 
     if response.status_code == 200:
@@ -248,6 +245,8 @@ Just show Total Risk Score and conclusion in output
     else:
         print("Error:", response.text)
         return response.text
+    print("llm response")
+    print(result["choices"][0]["message"]["content"])
     return result["choices"][0]["message"]["content"]
 
 
@@ -284,40 +283,10 @@ def fetch_duckduckgo_risk_data(company_name, num_results=5):
     return f"🔹 **Extended Risk Summary for {company_name}:**\n\n{risk_summary}"
 
 
+#give API and CX keys
+API_KEY=""""""
+CX=""
 
-
-def llmresponse(prompt):
-    response = requests.post(
-    url="https://openrouter.ai/api/v1/chat/completions",
-    headers={
-      "Authorization": "Bearer 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}",
-      "Content-Type": "application/json",
-    },
-    data=json.dumps({
-      "model": "nvidia/llama-3.1-nemotron-70b-instruct:free",
-      "messages": [
-        {
-          "role": "user",
-          "content": [
-            {
-              "type": "text",
-              "text": prompt
-            }
-          ]
-        }
-      ],
-      "temperature": 0.5
-    })
-    )
-
-    result = response.json()
-    print("llms response:")
-    print(result)
-    return result["choices"][0]["message"]["content"] if "choices" in result else "Error generating justification."
-
-
-API_KEY = "AIzaSyDyHPR19wz3olz4oS73ole5emeU3-tUgzM"  
-CX = "8337469a8b81e435d"  # Custom Search Engine ID
 
 def google_search(query, num_results=5):
     url = f"https://www.googleapis.com/customsearch/v1"
