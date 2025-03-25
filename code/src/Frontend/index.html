@@ -40,11 +40,13 @@
         /* ===== Main Container ===== */
         .container {
             display: grid;
+            position: relative;
             grid-template-columns: 3fr 1fr;
             grid-template-rows: 1fr 1fr;
             grid-template-areas: 
                 "text-area uploaded-files"
-                "output-area button-area";
+                "output-area output-area"
+                "button-area button-area";
             gap: 1rem;
             width: 100%;
             max-width: 1600px;
@@ -80,6 +82,7 @@
         .output-area {
             grid-area: output-area;
             padding: 0.5rem;
+            height: 100%;
         }
 
         .button-area {
@@ -89,6 +92,11 @@
             align-items: center;
             gap: 1.5rem;
             padding: 1rem;
+        }
+
+        .text-area, .output-area {
+            resize: none;
+            overflow: hidden;
         }
 
         /* ===== Input/Output Elements ===== */
@@ -230,6 +238,21 @@
         #output:not(:empty) h2 {
             display: none;
         }
+
+        .resize-handle {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 10px;
+            background: rgba(0, 247, 255, 0.3);
+            cursor: ns-resize;
+            z-index: 10;
+            transition: background 0.2s;
+        }
+
+        .resize-handle:hover {
+            background: var(--cyan);
+        }
     </style>
 </head>
 <body>
@@ -240,6 +263,9 @@
                      placeholder="Enter your text..."
                      aria-label="Text input area"></textarea>
         </div>
+
+        <!-- Add resize handle -->
+        <div class="resize-handle" id="resizeHandle"></div>
 
         <!-- Uploaded Files List -->
         <div class="panel uploaded-files">
@@ -362,6 +388,48 @@
                 outputArea.textContent = result.error || "An error occurred. Please try again.";
             }
         }
+
+        // JavaScript for resizing
+        const resizeHandle = document.getElementById('resizeHandle');
+        const container = document.querySelector('.container');
+        let isResizing = false;
+
+        resizeHandle.addEventListener('mousedown', function(e) {
+            isResizing = true;
+            document.body.style.cursor = 'ns-resize';
+            container.style.userSelect = 'none';
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!isResizing) return;
+            
+            const containerRect = container.getBoundingClientRect();
+            const offset = e.clientY - containerRect.top;
+            const newTopHeight = Math.min(Math.max(offset, 100), containerRect.height - 100);
+            
+            container.style.gridTemplateRows = `${newTopHeight}px 1fr`;
+            resizeHandle.style.top = `${newTopHeight - 5}px`;  // Direct position update
+        });
+
+        document.addEventListener('mouseup', function(e) {
+            isResizing = false;
+            document.body.style.cursor = '';
+            container.style.userSelect = '';
+        });
+
+// Remove the updateResizeHandle function and its calls
+
+        // Update initial position of resize handle
+        function updateResizeHandle() {
+            const textArea = document.querySelector('.text-area');
+            const textAreaRect = textArea.getBoundingClientRect();
+            resizeHandle.style.top = `${textAreaRect.bottom - 5}px`;
+        }
+
+        // Update on window resize
+        window.addEventListener('resize', updateResizeHandle);
+        // Initial position
+        updateResizeHandle();
     </script>
 </body>
 </html>
