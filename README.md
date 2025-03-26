@@ -1,4 +1,5 @@
 # 🚀 Project Name
+AI-Driven Entity Intelligence Risk Analysis
 
 ## 📌 Table of Contents
 - [Introduction](#introduction)
@@ -50,11 +51,12 @@ Describe the major technical or non-technical challenges your team encountered.
    ```
 
 ## 🏗️ Tech Stack
-- 🔹 Frontend: React / Vue / Angular
-- 🔹 Backend: Node.js / FastAPI / Django
-- 🔹 Database: PostgreSQL / Firebase
-- 🔹 Other: OpenAI API / Twilio / Stripe
+- 🔹 Frontend: HTML, CSS, JavaScript
+- 🔹 Backend: Python
+- 🔹 Data Handling: CSV files
+- 🔹 Packages: DDGS, LLMChain, getpass, pandas googlesearch, load_dotenv
 
 ## 👥 Team
-- **Your Name** - [GitHub](#) | [LinkedIn](#)
-- **Teammate 2** - [GitHub](#) | [LinkedIn](#)
+- **Prem Sai Bhumireddy** - [GitHub](#) | [LinkedIn](#)
+- **Hamsika Mannem** - [GitHub](#) | [LinkedIn](#)
+- **Abhinav Sai Pampati** - [GitHub](#) | [LinkedIn](#)
