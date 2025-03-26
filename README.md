@@ -18,6 +18,7 @@ AI-Driven Entity Intelligence Risk Analysis
 A brief overview of your project and its purpose. Mention which problem statement are your attempting to solve. Keep it concise and engaging.
 
 ## 🎥 Demo
+📑 [PPT Presentation](https://docs.google.com/presentation/d/1rK0PEE7DOOhVyTHGlyVTpvQ5xh3Aj8dlbGdrAI9pwV4/edit?slide=id.g343804b4342_6_66#slide=id.g343804b4342_6_66)
 🔗 [Live Demo](#) (if applicable)  
 📹 [Video Demo](#) (if applicable)  
 🖼️ Screenshots:
@@ -25,10 +26,9 @@ A brief overview of your project and its purpose. Mention which problem statemen
 ![Screenshot 1](link-to-image)
 
 ## 💡 Inspiration
-What inspired you to create this project? Describe the problem you're solving.
+We chose this challenge for the hackathon because it addresses a highly impactful real-world problem. Manual entity verification and risk analysis are time-consuming and prone to errors. By leveraging AI/ML, we aim to automate this process, reducing manual effort and enabling faster, more accurate decision-making. Our solution will enhance efficiency, improve risk detection, and provide valuable insights for analysts, making financial and regulatory processes more seamless and reliable.
 
 ## ⚙️ What It Does
-### **What It Does**  
 Our AI-driven system automates entity identification, and risk assessment, reducing manual effort. It processes input data, extracts entities, gathers relevant information, calculates risk scores, and classifies entities while providing justification and reasoning.  
 
 ### **Key Features**  
@@ -41,18 +41,28 @@ Our AI-driven system automates entity identification, and risk assessment, reduc
 
 ## 🛠️ How We Built It
 🔹 Frontend: Developed using HTML, CSS, and JavaScript, allowing users to input text or upload files.
+
 🔹 Backend: Built with Python and ML packages to process and analyze data efficiently.
+
 🔹 Entity Extraction: Utilized LLM to identify entities from structured and unstructured transaction data.
+
 🔹 Data Gathering: Collected entity-related information from multiple sources like google search, financial news, and legal databases.
+
 🔹 Risk Calculation: Leveraged LLM to assess entity attributes, and assign risk scores.
+
 🔹 Entity Classification: Categorized entities (corporation, non-profit, shell company, etc.) and provided reasoning for classification.
 
 ## 🚧 Challenges We Faced
 Most of the challenges we faced are technical which are listed below.
+
 ⚡ Handling Unstructured Data – Managing inconsistent and ambiguous entity names.
+
 ⚡ Data Availability & Accuracy – Ensuring reliable and up-to-date information from external sources.
+
 ⚡ Optimizing LLM Performance – Balancing accuracy, speed, and computational efficiency.
+
 ⚡ Complex Risk Evaluation – Designing a robust risk-scoring mechanism for diverse entity types.
+
 ⚡ Justification & Transparency – Generating meaningful reasoning for classification and risk scores.
 
 ## 🏃 How to Run
