@@ -21,7 +21,10 @@ By integrating LLM-powered extraction, data aggregation, and intelligent classif
 ## 🎥 Demo
 📑[PPT Presentation](https://docs.google.com/presentation/d/1rK0PEE7DOOhVyTHGlyVTpvQ5xh3Aj8dlbGdrAI9pwV4/edit?slide=id.g343804b4342_6_66#slide=id.g343804b4342_6_66)     
 📹 [Video Demo](#) (if applicable)  
+
 🖼️ Screenshots:
+
+
 ![image](https://github.com/user-attachments/assets/d16d4634-2479-4b61-bfbd-7e980e67bf50)
 
 
@@ -77,9 +80,9 @@ Most of the challenges we faced are technical which are listed below.
    ```
 
 ## 🏗️ Tech Stack
-🔹 Frontend: HTML, CSS, JavaScript
-🔹 Backend: Python
-🔹 Data Handling: CSV files
+🔹 Frontend: HTML, CSS, JavaScript   
+🔹 Backend: Python   
+🔹 Data Handling: CSV files    
 🔹 Packages: DDGS, LLMChain, getpass, pandas googlesearch, load_dotenv
 
 ## 👥 Team
