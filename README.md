@@ -25,7 +25,7 @@ By integrating LLM-powered extraction, data aggregation, and intelligent classif
 🖼️ Screenshots:
 
 
-![image](https://github.com/user-attachments/assets/d16d4634-2479-4b61-bfbd-7e980e67bf50)
+![FrontEnd](https://github.com/user-attachments/assets/3719b0c0-a82c-4843-996e-d1f1f14424a7)
 
 
 ## 💡 Inspiration
