@@ -19,9 +19,9 @@ Our project focuses on automating entity verification and risk assessment using 
 
 By integrating LLM-powered extraction, data aggregation, and intelligent classification, our system streamlines risk evaluation, enhances accuracy, and provides clear justifications for decision-making.
 ## 🎥 Demo
-📑[PPT Presentation](https://docs.google.com/presentation/d/1rK0PEE7DOOhVyTHGlyVTpvQ5xh3Aj8dlbGdrAI9pwV4/edit?slide=id.g343804b4342_6_66#slide=id.g343804b4342_6_66)     
-📹 [Video Demo](#) (if applicable)  
-
+📑[PPT Presentation](https://docs.google.com/presentation/d/1rK0PEE7DOOhVyTHGlyVTpvQ5xh3Aj8dlbGdrAI9pwV4/edit?slide=id.g343804b4342_6_66#slide=id.g343804b4342_6_66)        
+📹 [Video Demo - TextInput](https://github.com/ewfx/aidel-llmao/blob/main/artifacts/demo/TextInput_test_case_demo.mp4)      
+📹 [Video Demo - Fileupload](https://github.com/ewfx/aidel-llmao/blob/main/artifacts/demo/fileupload_test_case_demo.mp4)      
 🖼️ Screenshots:
 
 
