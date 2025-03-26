@@ -87,5 +87,5 @@ Most of the challenges we faced are technical which are listed below.
 
 ## 👥 Team
 - **Prem Sai Bhumireddy** - [GitHub](https://github.com/premsai1503) | [LinkedIn](https://www.linkedin.com/in/prem-sai-bhumireddy-62ab96214/)
-- **Hamsika Mannem** - [GitHub](#) | [LinkedIn](https://www.linkedin.com/in/hamsika-mannem-7b2a5322a/)
+- **Hamsika Mannem** - [GitHub](https://github.com/Hamsika0509/) | [LinkedIn](https://www.linkedin.com/in/hamsika-mannem-7b2a5322a/)
 - **Abhinav Sai Pampati** - [GitHub](https://github.com/abhinav2312) | [LinkedIn](https://www.linkedin.com/in/abhinav-sai-pampati-282b2a244/)
