@@ -1,5 +1,12 @@
-Replace this file with files that you would like to use for your demo. This may include
+**Hackathon_PPT** has all the details of our solution
 
-- A presentation/deck in pdf or pptx format
-- A demo video (screen capture) in mp4 or other popular video formats
-- Any other document describing your solution (in pdf or md format)
+In **Solution Approach** video we explain our approach to solve the problem
+
+**TextInput_test_case_demo** - we type the transaction detaits and analyze them
+
+https://github.com/user-attachments/assets/c91dd593-2729-4bf8-9186-899c56781bcb
+
+**fileupload_test_case_demo** - we upload a file which has transaction details and analyze them
+
+https://github.com/user-attachments/assets/7a89ae50-7bc5-4e36-9324-1d3ef9fa1a46
+
