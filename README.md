@@ -28,13 +28,32 @@ A brief overview of your project and its purpose. Mention which problem statemen
 What inspired you to create this project? Describe the problem you're solving.
 
 ## ⚙️ What It Does
-Explain the key features and functionalities of your project.
+### **What It Does**  
+Our AI-driven system automates entity identification, and risk assessment, reducing manual effort. It processes input data, extracts entities, gathers relevant information, calculates risk scores, and classifies entities while providing justification and reasoning.  
+
+### **Key Features**  
+✅ **Seamless Input Handling** – Supports text input or file uploads for processing.  
+✅ **Advanced Entity Extraction** – Uses LLM to accurately identify entities from structured and unstructured data.  
+✅ **Comprehensive Data Enrichment** – Gathers insights from multiple sources like company registries, financial news, and legal databases.  
+✅ **Intelligent Risk Assessment** – Analyzes entity attributes and connections to assign risk scores using LLM.  
+✅ **Automated Entity Classification** – Categorizes entities (corporation, non-profit, shell company, etc.) with reasoning and justification.  
+✅ **Enhanced Decision Support** – Provides confidence scores and supporting evidence for analysts.
 
 ## 🛠️ How We Built It
-Briefly outline the technologies, frameworks, and tools used in development.
+🔹 Frontend: Developed using HTML, CSS, and JavaScript, allowing users to input text or upload files.
+🔹 Backend: Built with Python and ML packages to process and analyze data efficiently.
+🔹 Entity Extraction: Utilized LLM to identify entities from structured and unstructured transaction data.
+🔹 Data Gathering: Collected entity-related information from multiple sources like google search, financial news, and legal databases.
+🔹 Risk Calculation: Leveraged LLM to assess entity attributes, and assign risk scores.
+🔹 Entity Classification: Categorized entities (corporation, non-profit, shell company, etc.) and provided reasoning for classification.
 
 ## 🚧 Challenges We Faced
-Describe the major technical or non-technical challenges your team encountered.
+Most of the challenges we faced are technical which are listed below.
+⚡ Handling Unstructured Data – Managing inconsistent and ambiguous entity names.
+⚡ Data Availability & Accuracy – Ensuring reliable and up-to-date information from external sources.
+⚡ Optimizing LLM Performance – Balancing accuracy, speed, and computational efficiency.
+⚡ Complex Risk Evaluation – Designing a robust risk-scoring mechanism for diverse entity types.
+⚡ Justification & Transparency – Generating meaningful reasoning for classification and risk scores.
 
 ## 🏃 How to Run
 1. Clone the repository  
@@ -57,6 +76,6 @@ Describe the major technical or non-technical challenges your team encountered.
 - 🔹 Packages: DDGS, LLMChain, getpass, pandas googlesearch, load_dotenv
 
 ## 👥 Team
-- **Prem Sai Bhumireddy** - [GitHub](#) | [LinkedIn](#)
-- **Hamsika Mannem** - [GitHub](#) | [LinkedIn](#)
-- **Abhinav Sai Pampati** - [GitHub](#) | [LinkedIn](#)
+- **Prem Sai Bhumireddy** - [GitHub](https://github.com/premsai1503) | [LinkedIn](https://www.linkedin.com/in/prem-sai-bhumireddy-62ab96214/)
+- **Hamsika Mannem** - [GitHub](#) | [LinkedIn](https://www.linkedin.com/in/hamsika-mannem-7b2a5322a/)
+- **Abhinav Sai Pampati** - [GitHub](https://github.com/abhinav2312) | [LinkedIn](https://www.linkedin.com/in/abhinav-sai-pampati-282b2a244/)
