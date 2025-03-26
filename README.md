@@ -15,15 +15,16 @@ AI-Driven Entity Intelligence Risk Analysis
 ---
 
 ## 🎯 Introduction
-A brief overview of your project and its purpose. Mention which problem statement are your attempting to solve. Keep it concise and engaging.
+Our project focuses on automating entity verification and risk assessment using AI/ML, eliminating the need for extensive manual analysis. We address the challenge of identifying and evaluating entities from transaction data, which is often unstructured and inconsistent.
 
+By integrating LLM-powered extraction, data aggregation, and intelligent classification, our system streamlines risk evaluation, enhances accuracy, and provides clear justifications for decision-making.
 ## 🎥 Demo
-📑[PPT Presentaion](https://docs.google.com/presentation/d/1rK0PEE7DOOhVyTHGlyVTpvQ5xh3Aj8dlbGdrAI9pwV4/edit?slide=id.g343804b4342_6_66#slide=id.g343804b4342_6_66)     
+📑[PPT Presentation](https://docs.google.com/presentation/d/1rK0PEE7DOOhVyTHGlyVTpvQ5xh3Aj8dlbGdrAI9pwV4/edit?slide=id.g343804b4342_6_66#slide=id.g343804b4342_6_66)     
 🔗 [Live Demo](#) (if applicable)  
 📹 [Video Demo](#) (if applicable)  
 🖼️ Screenshots:
+![image](https://github.com/user-attachments/assets/d16d4634-2479-4b61-bfbd-7e980e67bf50)
 
-![Screenshot 1](link-to-image)
 
 ## 💡 Inspiration
 We chose this challenge for the hackathon because it addresses a highly impactful real-world problem. Manual entity verification and risk analysis are time-consuming and prone to errors. By leveraging AI/ML, we aim to automate this process, reducing manual effort and enabling faster, more accurate decision-making. Our solution will enhance efficiency, improve risk detection, and provide valuable insights for analysts, making financial and regulatory processes more seamless and reliable.
