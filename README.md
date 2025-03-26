@@ -18,7 +18,7 @@ AI-Driven Entity Intelligence Risk Analysis
 A brief overview of your project and its purpose. Mention which problem statement are your attempting to solve. Keep it concise and engaging.
 
 ## 🎥 Demo
-📑 [PPT Presentation](https://docs.google.com/presentation/d/1rK0PEE7DOOhVyTHGlyVTpvQ5xh3Aj8dlbGdrAI9pwV4/edit?slide=id.g343804b4342_6_66#slide=id.g343804b4342_6_66)
+📑[PPT Presentaion](https://docs.google.com/presentation/d/1rK0PEE7DOOhVyTHGlyVTpvQ5xh3Aj8dlbGdrAI9pwV4/edit?slide=id.g343804b4342_6_66#slide=id.g343804b4342_6_66)     
 🔗 [Live Demo](#) (if applicable)  
 📹 [Video Demo](#) (if applicable)  
 🖼️ Screenshots:
