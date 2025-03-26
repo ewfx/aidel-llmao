@@ -46,6 +46,7 @@ def analyze():
         elif 'text' in request.json:
             text = request.json['text']
         entities = bk.extract_entities(text)
+        print("in appy.py - entities", entities)
         return jsonify({
             "status" : "success",
             "entities" : entities

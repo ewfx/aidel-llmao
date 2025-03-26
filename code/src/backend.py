@@ -5,6 +5,7 @@ from langchain.prompts.chat import (
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
 )
+from seclookup import (CIKLookup, SECRiskAnalyzer)
 from duckduckgo_search import DDGS
 from langchain.chains import LLMChain
 import getpass
@@ -21,7 +22,7 @@ load_dotenv()
 
 # if not os.environ.get("TOGETHER_API_KEY"):
 #     os.environ["TOGETHER_API_KEY"] = os.getenv("TOGETHER_API_KEY")
-df=pd.read_csv("sdn.csv")
+df=pd.read_csv("/home/nithish/home/applAI/aidel-llmao/code/src/sdn.csv")
 os.environ["TOGETHER_API_KEY"] = os.getenv("TOGETHER_API_KEY")
 def extract_json(response_content):
     try:
@@ -96,7 +97,8 @@ def extract_entities(text):
     try:
         # Define a system prompt to set the context and desired behavior.
         system_message = SystemMessagePromptTemplate.from_template(
-            "You are a helpful assistant specialized in extracting structured data from transaction records and identifying the nature of entities such as corporations, non-profits, shell companies, and financial intermediaries."
+            """You are a helpful assistant specialized in extracting structured data from transaction records and identifying the nature of entities such as 
+            corporations, non-profits, shell companies, and financial intermediaries."""
         )
 
         # Define the human message with instructions and the expected JSON schema.
@@ -109,18 +111,24 @@ def extract_entities(text):
             "sender": {{
                 "name": "ENTITY_NAME",
                 "location": "ENTITY_LOCATION",
+                "country_code": "ISO 3166-1 alpha-2 country code",
+                "jurisdiction": "ENTITY_JURISDICTION",
                 "identifiers": {{"registration_number": "VALUE", "tax_id": "VALUE"}},
                 "additional_details": "Additional sender details"
             }},
             "receiver": {{
                 "name": "ENTITY_NAME",
                 "location": "ENTITY_LOCATION",
+                "country_code": "ISO 3166-1 alpha-2 country code",
+                "jurisdiction": "ENTITY_JURISDICTION",
                 "identifiers": {{"registration_number": "VALUE", "tax_id": "VALUE"}},
                 "additional_details": "Additional receiver details"
             }},
             "intermediaries": [
                 {{
                 "name": "ENTITY_NAME",
+                "country_code": "ISO 3166-1 alpha-2 country code",
+                "jurisdiction": "ENTITY_JURISDICTION",
                 "role": "Financial intermediary / Shell company",
                 "location": "ENTITY_LOCATION"
                 }}
@@ -128,6 +136,8 @@ def extract_entities(text):
             "beneficiaries": [
                 {{
                 "name": "ENTITY_NAME",
+                "country_code": "ISO 3166-1 alpha-2 country code",
+                "jurisdiction": "ENTITY_JURISDICTION",
                 "relationship": "Beneficiary or payee",
                 "details": "Additional notes"
                 }}
@@ -164,13 +174,18 @@ def extract_entities(text):
         # print(result)
 
         result_json = extract_json(result.content)
-          # Access .content property
+        
+        # Access .content property
+        Transaction_ID = result_json["Transaction_ID"]
         sender_name = result_json.get("sender", {}).get("name", "Unknown")
         receiver_name = result_json.get("receiver", {}).get("name", "Unknown")
-        print(sender_name)
-        print(receiver_name)
-        getllmResponse=getRiskScore(sender_name,receiver_name)
-        print(getllmResponse)
+        # intermediaries = result_json.get("intermediaries", {}).get("name", "Unknown")
+        # beneficiaries = result_json.get("beneficiaries", {}).get("name", "Unknown")
+        intermediaries = None
+        beneficiaries = None
+        
+        getllmResponse=getRiskScore(Transaction_ID, sender_name, receiver_name, intermediaries, beneficiaries)
+        print("in backend.py - risk json ==>",getllmResponse)
         # print(getllmResponse.type())
         # extract_llmresponse_entities(getllmResponse,result_json)
         
@@ -181,16 +196,68 @@ def extract_entities(text):
     except Exception as e:
         print(str(e))
         # return {"error": f"LLM processing failed: {str(e)}"}
-def getRiskScore(senderCompany,receiverCompany):
+
+def getSECEdgar_data(entity_name):
+    print(entity_name)
+    lookup = CIKLookup('cik_mapping.csv')
+    lookup_result = lookup.find_cik(entity_name)
+    print(lookup_result)
+    try:
+        with open("companyfacts/"+lookup_result['filename'], 'r') as f:
+            entity_data = json.load(f)
+        # Analyze risks
+        analyzer = SECRiskAnalyzer(entity_data)
+        risk_report = analyzer.analyze()
+        summary = analyzer.get_risk_summary()
+
+        sec_summary = {
+            "entity_name" : entity_name,
+            "match_type" : lookup_result["match_type"],
+            "confidence_score" : lookup_result["score"],
+            "risk_summary" : summary,
+            "full analysis from SEC Edgar" : risk_report
+        }
+        print("sec summary -->", sec_summary)
+        return sec_summary
+    except Exception as e:
+        print(e)
+        return "error while sec lookup"
+
+
+def getRiskScore(Transaction_ID, senderCompany, receiverCompany, intermediaries, beneficiaries):
+    #sender
+    print(1)
     isSenderSanctioned=fetch_sanctions(senderCompany)
+    print(2)
     senderwikipediaData=fetch_duckduckgo_risk_data(senderCompany)
+    print(3)
     sendergoogleData=google_search(senderCompany)
-    isReceiverSanctioned=fetch_sanctions(receiverCompany)
+    print(4)
+    senderSecData = getSECEdgar_data(senderCompany)
+    print(5)
+
+    #receiver
+    print(1)
     receiverwikipediaData=fetch_duckduckgo_risk_data(receiverCompany)
+    print(2)
     receivergoogleData=google_search(receiverCompany)
-    return llmResponseChain(isSenderSanctioned,senderwikipediaData,sendergoogleData,isReceiverSanctioned,receiverwikipediaData,receivergoogleData,senderCompany,receiverCompany)
+    print(3)
+    isReceiverSanctioned=fetch_sanctions(receiverCompany)
+    print(4)
+    receiverSecData = getSECEdgar_data(receiverCompany)
+    print(5)
+    return llmResponseChain(
+        Transaction_ID,
+        isSenderSanctioned, senderwikipediaData, sendergoogleData, senderSecData, 
+        isReceiverSanctioned, receiverwikipediaData, receivergoogleData, receiverSecData,
+        senderCompany, receiverCompany, intermediaries, beneficiaries
+    )
       
-def llmResponseChain(isSenderSanctioned,senderwikipediaData,sendergoogleData,isReceiverSanctioned,receiverwikipediaData,receivergoogleData,senderCompany,receiverCompany):
+def llmResponseChain(Transaction_ID, 
+                     isSenderSanctioned, senderwikipediaData, sendergoogleData, senderSecData,
+                     isReceiverSanctioned, receiverwikipediaData, receivergoogleData, receiverSecData,
+                     senderCompany, receiverCompany, intermediaries, beneficiaries
+                    ):
     url = "https://api.together.xyz/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer API KEY",
@@ -198,13 +265,52 @@ def llmResponseChain(isSenderSanctioned,senderwikipediaData,sendergoogleData,isR
     }
 
     # Format the prompt
-    prompt = f"""
-    ### Combined Company Risk Score Analysis  
+    system_message = SystemMessage(
+        """You are a highly specialized AI designed for **financial, regulatory, and reputational risk assessment**. 
+        Your task is to analyze transactions based on **structured entity data** from various sources such as SEC Edgar, OFAC, offshore database leaks, Wikipedia, and Google.
+
+        ### **Behavior Guidelines**
+        1. **Risk Analysis**: Perform **deep semantic analysis** of the provided data to detect legal, financial, and reputational risks.
+        2. **Implicit Risk Detection**: Identify risks even if explicit terms like *lawsuit, fraud, bankruptcy, sanctions* are absent but implied in the context.
+        3. **Risk Score Assignment**: Assign a **quantitative risk score** based on severity, frequency, and impact of identified risks.
+        4. **Output Structure**: Ensure the response follows the exact **JSON structure** provided below. No additional text should be included.
+        5. **Confidence Score**: Assign a confidence level based on **the amount and quality of supporting data**.
+        6. **Evidence-Based Conclusion**: Summarize key findings using **verifiable data** from **Google and Wikipedia** sources.
+
+        ### **Output Format**
+        The response must strictly follow this JSON format:
+        ```json
+        {
+            "Transaction ID": "transaction id",
+            "Extracted Entity": [<sender>, <receiver>, <intermediaries>, <beneficiaries>],
+            "Entity Type": [<sender entity type>, <receiver entity type>, <intermediary type>, <beneficiary type>],
+            "Risk Score": assigned risk score,
+            "Supporting Evidence": "...",
+            "Confidence Score": calculated confidence score,
+            "Reason": "Brief reason explaining the risk score"
+        }
+        <> these are used as placeholder, values enclosed in <> are not exact values. You should find them in the data given to you.
+        If you beneficiaries and intermediaries are not mentioned as "None" in the data given to feel free to not include them in "Extracted Entity" and "Entity Type"
+        """
+    )
+
+    human =HumanMessage(f"""
+    ### Combined Company Risk Score Analysis
+    **Transaction ID:** {Transaction_ID}
+    **Entities Involved**  
+        - *Sender:* {senderCompany}  
+        - *Receiver:* {receiverCompany}  
+        {f'- *Intermediaries:*{intermediaries}' if intermediaries else ''}  
+        {f'- *Beneficiaries:* {beneficiaries}' if beneficiaries else ''}
 
     *Sender:* {senderCompany}  
     *Receiver:* {receiverCompany}  
     #### 🛑 *Sanctions Status*
     - "⚠️ HIGH RISK: if {senderCompany} has {isSenderSanctioned} give HIGH else LOW and if {receiverCompany} has {isReceiverSanctioned} give HIGH else LOW"
+
+    ### SEC Edgar data
+    *Sender:* {senderSecData}  
+    *Receiver:* {receiverSecData}
 
     ### *Task*  
     1. *Perform a semantic search* within the provided data to detect regulatory, financial, and reputational risks {receiverwikipediaData and senderwikipediaData and sendergoogleData and receivergoogleData}.  
@@ -230,24 +336,39 @@ def llmResponseChain(isSenderSanctioned,senderwikipediaData,sendergoogleData,isR
 
    
     *📝 Conclusion:*  
-    Generate the conclusion from the available data from google and wikipedia data for both sender and receiver be precise dont mention th percentage in conclusion.  Mention Both sender and receiver company details
+    Generate the conclusion from the available data from google and wikipedia data for both sender and receiver be precise dont mention th percentage in conclusion.  
+    Mention Both sender and receiver company details
 
-    """
-    data = {
-        "model": "meta-llama/Llama-Vision-Free",
-        "messages": [{"role": "user", "content": prompt}],
-        "temperature": 0.3
-    }
-    response = requests.post(url, headers=headers, data=json.dumps(data))
+    ### **📝 Final Output (JSON Format Only)**
+    {{
+        "Transaction ID": {Transaction_ID},
+        "Extracted Entity": ["{senderCompany}", "{receiverCompany}", "{intermediaries}", "{beneficiaries}"],
+        "Entity Type": ["senderEntityType", "receiverEntityType", "intermediaryType", "beneficiaryType"],
+        "Risk Score": calculated_risk_score,
+        "Supporting Evidence": "...",
+        "Confidence Score": "confidence_score",
+        "Reason": "Summarized risk factors"
+    }}
+    """)
+    # data = {
+    #     "model": "meta-llama/Llama-Vision-Free",
+    #     "messages": [{"role": "user", "content": prompt}],
+    #     "temperature": 0.3
+    # }
+    # response = requests.post(url, headers=headers, data=json.dumps(data))
 
-    if response.status_code == 200:
-        result = response.json()
-    else:
-        print("Error:", response.text)
-        return response.text
-    print("llm response")
-    print(result["choices"][0]["message"]["content"])
-    return result["choices"][0]["message"]["content"]
+    # if response.status_code == 200:
+    #     result = response.json()
+    # else:
+    #     print("Error:", response.text)
+    #     return response.text
+    # print("llm response")
+    # print(result["choices"][0]["message"]["content"])
+    # return result["choices"][0]["message"]["content"]
+    chat_model = init_chat_model("meta-llama/Llama-Vision-Free", model_provider="together")
+    response = chat_model.invoke([system_message, human])
+    print("In backend - ",response.content)
+    return response.content
 
 
 def fetch_sanctions(company_name):

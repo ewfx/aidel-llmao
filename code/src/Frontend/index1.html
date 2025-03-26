@@ -224,7 +224,16 @@
         .resize-handle:hover {
             background: var(--border-color);
         }
+        pre code.json {
+            display: block;
+            overflow-x: auto;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -330,16 +339,25 @@
         });
         // Helper function to handle response
         function handleResponse(result) {
+            console.log(result.entities + typeof(result.entities))
             const outputArea = document.getElementById('output');
             const loadingOverlay = outputArea.querySelector('.loading-overlay');
+
             // Hide loading spinner
             loadingOverlay.style.display = 'none';
+
             if (result.status === 'success') {
                 if (result.entities && result.entities.error) {
                     outputArea.textContent = result.entities.error;
                 } else {
-                    console.log(result.entities)
-                    outputArea.textContent = JSON.stringify(result.entities, null, 2);
+                    // Format the JSON response with indentation
+                    const parsedEntities = JSON.parse(result.entities);
+
+                    // Format the parsed object into a readable JSON string
+                    outputArea.textContent = JSON.stringify(parsedEntities, null, 2);
+
+                    // Apply Highlight.js
+                    hljs.highlightAll();
                 }
             } else {
                 outputArea.textContent = result.error || "An error occurred. Please try again.";
