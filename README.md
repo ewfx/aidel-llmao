@@ -72,12 +72,9 @@ Most of the challenges we faced are technical which are listed below.
    git clone https://github.com/your-repo.git
    ```
 2. Install dependencies  
-   ```sh
-   npm install  # or pip install -r requirements.txt (for Python)
-   ```
 3. Run the project  
    ```sh
-   npm start  # or python app.py
+   python code/src/app/py
    ```
 
 ## 🏗️ Tech Stack
